@@ -1,0 +1,16 @@
+﻿__pycache__/
+*.pyc
+.DS_Store
+.vscode/
+
+# Large / generated data (rebuild via train.ipynb RUN_DATA_PREP=True)
+153factor.parquet
+data/raw/*.parquet
+data/processed/
+outputs/
+
+# Model checkpoints
+*.pkl
+
+# Reference clone (if re-added)
+_master_src/

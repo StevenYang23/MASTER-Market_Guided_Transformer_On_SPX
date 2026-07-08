@@ -1,0 +1,8 @@
+﻿torch>=1.11.0
+pandas==1.5.3
+numpy
+pyarrow
+yfinance
+tqdm
+matplotlib
+jupyter
