@@ -4,6 +4,7 @@
 .vscode/
 
 # Large / generated data (rebuild via train.ipynb RUN_DATA_PREP=True)
+data/spx_stock_data.csv
 153factor.parquet
 data/raw/*.parquet
 data/processed/

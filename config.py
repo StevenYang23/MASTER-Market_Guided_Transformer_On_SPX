@@ -6,19 +6,20 @@ RAW_DIR = DATA_DIR / "raw"
 PROCESSED_DIR = DATA_DIR / "processed"
 OUTPUT_DIR = ROOT / "outputs" / "walkforward"
 
-FACTOR_PARQUET = ROOT / "153factor.parquet"
-MARKET_RAW_PARQUET = RAW_DIR / "us_indices_monthly.parquet"
+# Raw WRDS export (local only; gitignored)
+SPX_STOCK_CSV = DATA_DIR / "spx_stock_data.csv"
+CRSP_CLEAN_PARQUET = PROCESSED_DIR / "crsp_daily_clean.parquet"
+ALPHA158_PARQUET = PROCESSED_DIR / "alpha158_daily.parquet"
+
+MARKET_RAW_PARQUET = RAW_DIR / "us_indices_daily.parquet"
 MARKET_FEATURES_CSV = RAW_DIR / "us_market_information.csv"
 MASTER_PANEL_PARQUET = PROCESSED_DIR / "master_panel_long.parquet"
 
-META_COLS = [
-    "obs_main", "exch_main", "common", "primary_sec", "permno", "date",
-    "permco", "excntry", "eom", "me", "ret_exc_lead1m", "ret_exc", "crsp_exchcd",
-]
-LABEL_COL = "ret_exc_lead1m"
-N_FACTORS = 153
+LABEL_COL = "label"
+N_FACTORS = 158
 N_MARKET = 63
 STEP_LEN = 8
+LABEL_FORWARD_DAYS = 5  # paper: Ref(close,-5)/Ref(close,-1)-1
 
 D_FEAT = N_FACTORS
 GATE_INPUT_START = N_FACTORS
@@ -26,6 +27,10 @@ GATE_INPUT_END = N_FACTORS + N_MARKET
 
 INDICES = {"SPX": "^GSPC", "NDX": "^IXIC", "DJI": "^DJI"}
 ROLLING_WINDOWS = [5, 10, 20, 30, 60]
+
+# Panel build filters
+PANEL_START_DATE = "1990-01-01"
+PANEL_END_DATE = "2025-12-31"
 
 REFIT_YEARS = [2000, 2010, 2020]
 TRAIN_YEARS = 20
