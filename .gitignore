@@ -8,7 +8,6 @@ data/spx_stock_data.csv
 153factor.parquet
 data/raw/*.parquet
 data/processed/
-outputs/
 
 # Model checkpoints
 *.pkl
