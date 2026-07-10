@@ -34,9 +34,23 @@ End-to-end workflow lives in [`train.ipynb`](train.ipynb): data prep → walk-fo
 
 ## Key Results
 
-Statistics below are from the saved walk-forward OOS predictions (`outputs/walkforward/predictions.parquet`), evaluated in `train.ipynb` (Section 5). Portfolio metrics use **no slippage** (`SLIPPAGE = 0`); annualization uses `252 / 5 = 50.4` periods per year.
+Statistics below are from the saved walk-forward OOS predictions (`outputs/walkforward/predictions.parquet`), evaluated in `train.ipynb` (Section 5). Portfolio metrics use **no slippage** (`SLIPPAGE = 0`); annualization uses `252 / 5 = 50.4` periods per year. All figures are exported to [`demo/`](demo/) (7 images).
 
-### Prediction quality (daily cross-sectional)
+### Model architecture
+
+![MASTER framework](demo/framework.png)
+
+Market-guided gating → feature layer → temporal attention (intra-stock) → cross-sectional attention (inter-stock) → temporal pooling → return prediction.
+
+### Portfolio PnL
+
+![Long–short portfolio PnL](demo/portfolioPNL.png)
+
+Period PnL, return distribution, and cumulative PnL for the long–short book.
+
+### Summary statistics
+
+#### Prediction quality (daily cross-sectional)
 
 | Metric | Value |
 |--------|------:|
@@ -53,15 +67,15 @@ Statistics below are from the saved walk-forward OOS predictions (`outputs/walkf
 | 2010 | 2010 | 0.0126 | 0.095 | 0.0189 | 0.149 |
 | 2020 | 2020 | 0.0164 | 0.106 | 0.0197 | 0.125 |
 
-### Portfolio performance (long–short, top/bottom 10%)
+#### Portfolio performance (long–short, top/bottom 10%)
 
 | Strategy | Annual return | Sharpe |
 |----------|--------------:|-------:|
-| **Long–Short** | 28.40% | 2.86 |
-| Long only | 27.69% | 3.96 |
-| Short only | 0.70% | 0.11 |
+| **Long–Short** | 26.71% | 2.69 |
+| Long only | 26.87% | 3.85 |
+| Short only | −0.16% | −0.03 |
 
-### CAPM vs SPX (5-day holding periods)
+#### CAPM vs SPX (5-day holding periods)
 
 Regression: `beta = corr(port, SPX) × std(port) / std(SPX)`,  
 `alpha_period = mean(port) − beta × mean(SPX)`,  
@@ -69,23 +83,11 @@ Regression: `beta = corr(port, SPX) × std(port) / std(SPX)`,
 
 | Strategy | Beta | Alpha (annual) |
 |----------|-----:|---------------:|
-| **Long–Short** | −0.027 | 28.60% |
-| Long only | −0.009 | 27.76% |
-| Short only | −0.018 | 0.84% |
+| **Long–Short** | −0.027 | 26.92% |
+| Long only | −0.009 | 26.94% |
+| Short only | −0.018 | −0.03% |
 
 > **Note:** Backtest returns are **gross** (no transaction costs unless `SLIPPAGE` is set in the notebook). Results are in-sample to the walk-forward OOS design and depend on the CRSP panel and factor pipeline.
-
----
-
-## Demo Figures
-
-All figures are exported to [`demo/`](demo/) (7 images).
-
-### Model architecture
-
-![MASTER framework](demo/framework.png)
-
-Market-guided gating → feature layer → temporal attention (intra-stock) → cross-sectional attention (inter-stock) → temporal pooling → return prediction.
 
 ### Information Coefficient (IC)
 
@@ -99,29 +101,23 @@ Daily cross-sectional Pearson correlation between model predictions and 5-day fo
 
 Daily cross-sectional Spearman correlation between predicted and realized ranks.
 
-### Portfolio PnL
-
-![Long–short portfolio PnL](demo/portfolioPNL.png)
-
-Period PnL, return distribution, and cumulative PnL for the long–short book.
-
 ### Portfolio PnL decomposition (no slippage)
 
 ![Cumulative PnL decomposition](demo/PNL_decomp.png)
 
 Cumulative simple returns for long–short, long-only, and short-only legs (top/bottom 10%, no slippage).
 
-### CAPM regression vs SPX
-
-![Long–short CAPM scatter](demo/CAPM.png)
-
-Scatter of long–short 5-day portfolio returns vs SPX 5-day returns with OLS fit (slope ≈ beta, intercept ≈ alpha per period).
-
 ### Portfolio turnover
 
 ![Rebalance turnover rate](demo/Turnover.png)
 
 One-sided turnover at each rebalance date (average of long-leg and short-leg turnover), with a 12-period rolling mean.
+
+### CAPM regression vs SPX
+
+![Long–short CAPM scatter](demo/CAPM.png)
+
+Scatter of long–short 5-day portfolio returns vs SPX 5-day returns with OLS fit (slope ≈ beta, intercept ≈ alpha per period).
 
 ---
 
