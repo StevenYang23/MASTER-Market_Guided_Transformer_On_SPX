@@ -186,7 +186,8 @@ def run_fold(parquet_path, refit_year, seed=0, n_epoch=N_EPOCH, gpu=0, smoke: bo
         f"\n=== Refit {refit_year}: train={len(dl_train)} val={len(dl_valid)} oos={len(dl_test)} ==="
     )
     model.fit(dl_train, dl_valid, show_progress=True)
-    predictions, metrics = model.predict(dl_test, show_progress=True)
+    predictions, metrics = model.predict(dl_test, show_progress=True, label_col=LABEL_COL)
+    predictions["refit_year"] = refit_year
     tqdm.write(f"OOS metrics: {metrics}")
     return predictions, metrics
 
@@ -225,8 +226,6 @@ def main():
             gpu=args.gpu,
             smoke=args.smoke,
         )
-        preds = preds.to_frame("pred")
-        preds["refit_year"] = year
         all_preds.append(preds)
         metrics_rows.append({"refit_year": year, **metrics})
 

@@ -13,6 +13,9 @@ from tqdm.auto import tqdm
 
 from config import LABEL_COL, STEP_LEN, TRAIN_YEARS, OOS_YEARS, VAL_RATIO
 
+# Qlib RobustZScoreNorm scales MAD by 1.4826 to approximate std for normal data.
+MAD_SCALE = np.float32(1.4826)
+
 
 def compute_norm_stats(fit_df: pd.DataFrame, feature_cols: list) -> tuple[pd.Series, pd.Series]:
     med = fit_df[feature_cols].median().astype(np.float32)
@@ -20,7 +23,7 @@ def compute_norm_stats(fit_df: pd.DataFrame, feature_cols: list) -> tuple[pd.Ser
     for col in feature_cols:
         fit_arr = fit_df[col].to_numpy(dtype=np.float32, copy=False)
         col_mad = np.median(np.abs(fit_arr - med[col]))
-        mad[col] = np.float32(1.0 if col_mad == 0 else col_mad)
+        mad[col] = np.float32(1.0 if col_mad == 0 else col_mad * MAD_SCALE)
     return med, mad
 
 
@@ -33,7 +36,7 @@ def apply_robust_zscore_norm(
 ) -> pd.DataFrame:
     feature_cols = feature_cols or list(df.columns[:-1])
     for col in feature_cols:
-        arr = df[col].to_numpy(dtype=np.float32, copy=False)
+        arr = df[col].to_numpy(dtype=np.float32, copy=True)
         arr -= med[col]
         arr /= mad[col]
         np.clip(arr, -clip, clip, out=arr)

@@ -9,20 +9,29 @@ import torch.optim as optim
 from tqdm.auto import tqdm
 
 def calc_ic(pred, label):
-    df = pd.DataFrame({'pred':pred, 'label':label})
-    ic = df['pred'].corr(df['label'])
-    ric = df['pred'].corr(df['label'], method='spearman')
+    pred = np.asarray(pred, dtype=np.float64).ravel()
+    label = np.asarray(label, dtype=np.float64).ravel()
+    df = pd.DataFrame({"pred": pred, "label": label})
+    ic = df["pred"].corr(df["label"])
+    ric = df["pred"].corr(df["label"], method="spearman")
     return ic, ric
 
 def zscore(x):
-    return (x - x.mean()).div(x.std())
+    std = x.std()
+    if std == 0 or torch.isnan(std):
+        return x * 0.0
+    return (x - x.mean()).div(std)
 
 def drop_extreme(x):
     sorted_tensor, indices = x.sort()
     N = x.shape[0]
-    percent_2_5 = int(0.025*N)  
-    # Exclude top 2.5% and bottom 2.5% values
-    filtered_indices = indices[percent_2_5:-percent_2_5]
+    percent_2_5 = int(0.025 * N)
+    # Exclude top/bottom 2.5% when N is large enough; otherwise keep all samples.
+    # indices[0:-0] is empty in Python, so we must special-case percent_2_5 == 0.
+    if percent_2_5 == 0:
+        filtered_indices = indices
+    else:
+        filtered_indices = indices[percent_2_5 : N - percent_2_5]
     mask = torch.zeros_like(x, device=x.device, dtype=torch.bool)
     mask[filtered_indices] = True
     return mask, x[mask]
@@ -35,23 +44,25 @@ class DailyBatchSamplerRandom(Sampler):
     def __init__(self, data_source, shuffle=False):
         self.data_source = data_source
         self.shuffle = shuffle
-        # calculate number of samples in each batch
-        self.daily_count = pd.Series(index=self.data_source.get_index()).groupby("datetime").size().values
-        self.daily_index = np.roll(np.cumsum(self.daily_count), 1)  # calculate begin index of each batch
-        self.daily_index[0] = 0
+        
+        index = self.data_source.get_index()
+        df = pd.DataFrame(index=index)
+        df["index_val"] = np.arange(len(index))
+        # Group indices by datetime to secure cross-sectional daily batch alignment
+        self.daily_groups = df.groupby(level="datetime")["index_val"].apply(list).tolist()
 
     def __iter__(self):
         if self.shuffle:
-            index = np.arange(len(self.daily_count))
-            np.random.shuffle(index)
-            for i in index:
-                yield np.arange(self.daily_index[i], self.daily_index[i] + self.daily_count[i])
+            indices = np.arange(len(self.daily_groups))
+            np.random.shuffle(indices)
+            for i in indices:
+                yield self.daily_groups[i]
         else:
-            for idx, count in zip(self.daily_index, self.daily_count):
-                yield np.arange(idx, idx + count)
+            for group in self.daily_groups:
+                yield group
 
     def __len__(self):
-        return len(self.data_source)
+        return len(self.daily_groups)
 
 
 class SequenceModel():
@@ -221,8 +232,10 @@ class SequenceModel():
             tqdm.write(f"Restored best model with valid {self.early_stop_metric}={best_score:.4f}")
         
 
-    def predict(self, dl_test, show_progress=False):
-        if self.fitted<0:
+    def predict(self, dl_test, show_progress=False, label_col="label"):
+        if isinstance(self.fitted, str):
+            pass
+        elif self.fitted < 0:
             raise ValueError("model is not fitted yet!")
         elif not show_progress:
             pass
@@ -232,6 +245,7 @@ class SequenceModel():
         test_loader = self._init_data_loader(dl_test, shuffle=False, drop_last=False)
 
         preds = []
+        labels = []
         ic = []
         ric = []
 
@@ -241,25 +255,32 @@ class SequenceModel():
             data = torch.squeeze(data, dim=0)
             feature = data[:, :, 0:-1].to(self.device)
             label = data[:, -1, -1]
-            
-            # nan label will be automatically ignored when compute metrics.
-            # zscorenorm will not affect the results of ranking-based metrics.
 
             with torch.no_grad():
-                pred = self.model(feature.float()).detach().cpu().numpy()
-            preds.append(pred.ravel())
+                pred = self.model(feature.float()).detach().cpu().numpy().ravel()
+            label_np = label.detach().cpu().numpy().ravel()
+            preds.append(pred)
+            labels.append(label_np)
 
-            daily_ic, daily_ric = calc_ic(pred, label.detach().numpy())
+            daily_ic, daily_ric = calc_ic(pred, label_np)
             ic.append(daily_ic)
             ric.append(daily_ric)
 
-        predictions = pd.Series(np.concatenate(preds), index=dl_test.get_index())
+        predictions = pd.DataFrame(
+            {
+                "pred": np.concatenate(preds),
+                label_col: np.concatenate(labels),
+            },
+            index=dl_test.get_index(),
+        )
 
+        ic_arr = np.asarray(ic, dtype=np.float64)
+        ric_arr = np.asarray(ric, dtype=np.float64)
         metrics = {
-            'IC': np.mean(ic),
-            'ICIR': np.mean(ic)/np.std(ic),
-            'RIC': np.mean(ric),
-            'RICIR': np.mean(ric)/np.std(ric)
+            "IC": float(np.nanmean(ic_arr)),
+            "ICIR": float(np.nanmean(ic_arr) / np.nanstd(ic_arr)),
+            "RIC": float(np.nanmean(ric_arr)),
+            "RICIR": float(np.nanmean(ric_arr) / np.nanstd(ric_arr)),
         }
 
         return predictions, metrics

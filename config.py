@@ -9,14 +9,14 @@ OUTPUT_DIR = ROOT / "outputs" / "walkforward"
 # Raw WRDS export (local only; gitignored)
 SPX_STOCK_CSV = DATA_DIR / "spx_stock_data.csv"
 CRSP_CLEAN_PARQUET = PROCESSED_DIR / "crsp_daily_clean.parquet"
-ALPHA158_PARQUET = PROCESSED_DIR / "alpha158_daily.parquet"
+QLIB_DATA_DIR = PROCESSED_DIR / "qlib_us"
 
 MARKET_RAW_PARQUET = RAW_DIR / "us_indices_daily.parquet"
 MARKET_FEATURES_CSV = RAW_DIR / "us_market_information.csv"
 MASTER_PANEL_PARQUET = PROCESSED_DIR / "master_panel_long.parquet"
 
 LABEL_COL = "label"
-N_FACTORS = 158
+N_FACTORS = 159
 N_MARKET = 63
 STEP_LEN = 8
 LABEL_FORWARD_DAYS = 5  # paper: Ref(close,-5)/Ref(close,-1)-1
@@ -43,7 +43,7 @@ S_NHEAD = 2
 DROPOUT = 0.5
 BETA = 5
 LR = 1e-5
-N_EPOCH = 100
+N_EPOCH = 40  # paper: at most 40 epochs with early stopping
 TRAIN_STOP_LOSS_THRED = 0.95
 EARLY_STOP_PATIENCE = 10
 EARLY_STOP_METRIC = "IC"  # IC or RIC
