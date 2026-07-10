@@ -9,8 +9,5 @@ data/spx_stock_data.csv
 data/raw/*.parquet
 data/processed/
 
-# Model checkpoints
-*.pkl
-
 # Reference clone (if re-added)
 _master_src/
