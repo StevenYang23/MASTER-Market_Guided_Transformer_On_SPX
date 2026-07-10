@@ -1,4 +1,4 @@
-[![DOI](https://zenodo.org/badge/732363363.svg)](https://doi.org/10.5281/zenodo.15480922)
+[![DOI](demo/zenodo-badge.svg)](https://doi.org/10.5281/zenodo.15480922)
 
 # MASTER — US SPX Reproduction
 
