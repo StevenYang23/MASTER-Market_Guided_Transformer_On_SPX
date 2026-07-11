@@ -24,8 +24,8 @@ MASTER is a stock transformer that:
 | Features | Alpha158 (158) + turnover + market gate (63) |
 | Label | 5-day forward return: `close[t+5]/close[t] - 1` |
 | Lookback | `STEP_LEN = 8` trading days |
-| Training | 20-year rolling window, refit at **2000 / 2010 / 2020** |
-| OOS horizon | 10 years per fold (combined OOS: **2000–2025**) |
+| Training | 10-year rolling window, refit every **2** years (**2000, 2002, …, 2024**) |
+| OOS horizon | 2 years per fold (combined OOS: **2000–2025**) |
 | Portfolio | Long top 10% / short bottom 10%, rebalance every **5** trading days |
 
 End-to-end workflow lives in [`train.ipynb`](train.ipynb): data prep → walk-forward training → IC / portfolio / CAPM analysis.
