@@ -52,26 +52,26 @@ Period PnL, return distribution, and cumulative PnL for the long–short book.
 
 | Metric | Value |
 |--------|------:|
-| **Mean IC** | 0.0260 |
-| **ICIR** | 0.4195 |
-| **Mean Rank IC** | 0.0244 |
-| **Rank ICIR** | 0.4980 |
+| **Mean IC** | 0.0334 |
+| **ICIR** | 0.586 |
+| **Mean Rank IC** | 0.0332 |
+| **Rank ICIR** | 0.673 |
 
 **Per-fold OOS IC** (from `outputs/walkforward/metrics_summary.csv`):
 
 | Refit year | OOS start | IC | ICIR | Rank IC | Rank ICIR |
 |:----------:|:---------:|---:|-----:|--------:|----------:|
-| 2000 | 2000 | 0.0497 | 0.418 | 0.0556 | 0.484 |
-| 2010 | 2010 | 0.0126 | 0.095 | 0.0189 | 0.149 |
-| 2020 | 2020 | 0.0164 | 0.106 | 0.0197 | 0.125 |
+| 2000 | 2000 | 0.0602 | 0.447 | 0.0696 | 0.575 |
+| 2010 | 2010 | 0.0211 | 0.150 | 0.0256 | 0.175 |
+| 2020 | 2020 | 0.0206 | 0.120 | 0.0213 | 0.118 |
 
 #### Portfolio performance (long–short, top/bottom 10%)
 
 | Strategy | Annual return | Sharpe |
 |----------|--------------:|-------:|
-| **Long–Short** | 26.71% | 2.69 |
-| Long only | 26.87% | 3.85 |
-| Short only | −0.16% | −0.03 |
+| **Long–Short** | 29.36% | 3.15 |
+| Long only | 27.50% | 4.10 |
+| Short only | 1.86% | 0.30 |
 
 #### CAPM vs SPX (5-day holding periods)
 
@@ -81,9 +81,9 @@ Regression: `beta = corr(port, SPX) × std(port) / std(SPX)`,
 
 | Strategy | Beta | Alpha (annual) |
 |----------|-----:|---------------:|
-| **Long–Short** | −0.027 | 26.92% |
-| Long only | −0.009 | 26.94% |
-| Short only | −0.018 | −0.03% |
+| **Long–Short** | −0.005 | 29.40% |
+| Long only | −0.003 | 27.52% |
+| Short only | −0.002 | 1.88% |
 
 > **Note:** Backtest returns are **gross** (no transaction costs unless `SLIPPAGE` is set in the notebook). Results are in-sample to the walk-forward OOS design and depend on the CRSP panel and factor pipeline.
 
