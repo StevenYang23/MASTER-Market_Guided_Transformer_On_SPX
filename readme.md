@@ -4,7 +4,7 @@
 
 Independent reproduction of the AAAI 2024 paper [**MASTER: Market-Guided Stock Transformer for Stock Price Forecasting**](https://ojs.aaai.org/index.php/AAAI/article/view/27767) ([arXiv](https://arxiv.org/abs/2312.15235)), adapted to **US equities (S&P 500 universe)** with daily Alpha158 factors and walk-forward training.
 
-Based on the authors’ public release ([Zenodo](https://doi.org/10.5281/zenodo.15480922)).
+This repo is based on the authors’ public release ([Zenodo](https://doi.org/10.5281/zenodo.15480922)).
 
 ---
 
@@ -15,6 +15,8 @@ MASTER is a stock transformer that:
 1. Uses **market-guided gating** to re-weight stock features from macro/market signals
 2. Applies **intra-stock** (temporal) and **inter-stock** (cross-sectional) attention
 3. Aggregates the time dimension to produce a cross-sectional alpha score
+
+**This implementation**
 
 | Item | Setting |
 |------|---------|
@@ -32,30 +34,46 @@ End-to-end workflow lives in [`train.ipynb`](train.ipynb): data prep → walk-fo
 
 ## Key Results
 
-Statistics below come from saved walk-forward OOS predictions (`outputs/walkforward/predictions.parquet`), evaluated in `train.ipynb` (Section 5). Portfolio backtests use per-stock slippage **`SLIPPAGE = 0.0005`**; annualization uses `252 / 5 = 50.4` periods per year.
+Statistics below are from the saved walk-forward OOS predictions (`outputs/walkforward/predictions.parquet`), evaluated in `train.ipynb` (Section 5). Portfolio metrics use **no slippage** (`SLIPPAGE = 0`); annualization uses `252 / 5 = 50.4` periods per year. All figures are exported to [`demo/`](demo/) (7 images).
 
-### At a glance
+### Model architecture
 
-![Combined IC / Rank IC / Portfolio PnL](demo/all_in_one.png)
+![MASTER framework](demo/framework.png)
 
-One-panel summary (Section **8b** in `train.ipynb`): daily IC and Rank IC (top row), cumulative IC / Rank IC (middle row), and long–short cumulative PnL (bottom). OOS window: **2000-01-03 → 2025-12-23** (3.2M stock-day predictions).
+Market-guided gating → feature layer → temporal attention (intra-stock) → cross-sectional attention (inter-stock) → temporal pooling → return prediction.
+
+### Portfolio PnL
+
+![Long–short portfolio PnL](demo/portfolioPNL.png)
+
+Period PnL, return distribution, and cumulative PnL for the long–short book.
+
+### Summary statistics
 
 #### Prediction quality (daily cross-sectional)
 
 | Metric | Value |
 |--------|------:|
-| **Mean IC** | 0.0334 |
-| **ICIR** | 0.586 |
-| **Mean Rank IC** | 0.0332 |
-| **Rank ICIR** | 0.673 |
+| **Mean IC** | 0.0260 |
+| **ICIR** | 0.4195 |
+| **Mean Rank IC** | 0.0244 |
+| **Rank ICIR** | 0.4980 |
+
+**Per-fold OOS IC** (from `outputs/walkforward/metrics_summary.csv`):
+
+| Refit year | OOS start | IC | ICIR | Rank IC | Rank ICIR |
+|:----------:|:---------:|---:|-----:|--------:|----------:|
+| 2000 | 2000 | 0.0497 | 0.418 | 0.0556 | 0.484 |
+| 2010 | 2010 | 0.0126 | 0.095 | 0.0189 | 0.149 |
+| 2020 | 2020 | 0.0164 | 0.106 | 0.0197 | 0.125 |
 
 #### Portfolio performance (long–short, top/bottom 10%)
 
-| Strategy | Annual return | Sharpe | Cumulative return |
-|----------|--------------:|-------:|------------------:|
-| **Long–Short** | 20.87% | 2.24 | 5.41× |
-| Long only | 23.30% | 3.48 | — |
-| Short only | −2.44% | −0.39 | — |
+| Strategy | Annual return | Sharpe |
+|----------|--------------:|-------:|
+| **Long–Short** | 26.71% | 2.69 |
+| Long only | 26.87% | 3.85 |
+| Short only | −0.16% | −0.03 |
 
 #### CAPM vs SPX (5-day holding periods)
 
@@ -65,56 +83,41 @@ Regression: `beta = corr(port, SPX) × std(port) / std(SPX)`,
 
 | Strategy | Beta | Alpha (annual) |
 |----------|-----:|---------------:|
-| **Long–Short** | −0.005 | 20.90% |
-| Long only | −0.003 | 23.33% |
-| Short only | — | — |
+| **Long–Short** | −0.027 | 26.92% |
+| Long only | −0.009 | 26.94% |
+| Short only | −0.018 | −0.03% |
 
-> **Note:** Returns are **gross of transaction costs** beyond the fixed slippage model. Results depend on the CRSP panel, factor pipeline, and walk-forward OOS design.
+> **Note:** Backtest returns are **gross** (no transaction costs unless `SLIPPAGE` is set in the notebook). Results are in-sample to the walk-forward OOS design and depend on the CRSP panel and factor pipeline.
 
-### Per-fold OOS IC
+### Information Coefficient (IC)
 
-From `outputs/walkforward/metrics_summary.csv`:
+![Monthly IC and cumulative IC](demo/IC.png)
 
-| Refit year | IC | ICIR | Rank IC | Rank ICIR |
-|:----------:|---:|-----:|--------:|----------:|
-| 2000 | 0.0602 | 0.447 | 0.0696 | 0.575 |
-| 2002 | 0.0465 | 0.398 | 0.0528 | 0.467 |
-| 2004 | 0.0474 | 0.349 | 0.0504 | 0.469 |
-| 2006 | 0.0338 | 0.272 | 0.0339 | 0.305 |
-| 2008 | 0.0402 | 0.263 | 0.0391 | 0.254 |
-| 2010 | 0.0211 | 0.150 | 0.0256 | 0.175 |
-| 2012 | 0.0165 | 0.184 | 0.0160 | 0.169 |
-| 2014 | −0.0098 | −0.067 | −0.0038 | −0.026 |
-| 2016 | 0.0003 | 0.002 | 0.0094 | 0.067 |
-| 2018 | 0.0100 | 0.069 | 0.0051 | 0.033 |
-| 2020 | 0.0206 | 0.120 | 0.0213 | 0.118 |
-| 2022 | 0.0101 | 0.071 | 0.0106 | 0.069 |
-| 2024 | 0.0070 | 0.049 | 0.0025 | 0.017 |
+Daily cross-sectional Pearson correlation between model predictions and 5-day forward labels, aggregated to monthly bars with cumulative sum.
 
-Signal strength is strongest in early folds (2000–2008) and weaker in recent years — consistent with alpha decay in US equities.
+### Rank Information Coefficient (Rank IC)
 
----
+![Monthly Rank IC and cumulative Rank IC](demo/RankIC.png)
 
-## Model & detailed figures
+Daily cross-sectional Spearman correlation between predicted and realized ranks.
 
-### Architecture
+### Portfolio PnL decomposition (no slippage)
 
-![MASTER framework](demo/framework.png)
+![Cumulative PnL decomposition](demo/PNL_decomp.png)
 
-Market-guided gating → feature layer → temporal attention (intra-stock) → cross-sectional attention (inter-stock) → temporal pooling → return prediction.
+Cumulative simple returns for long–short, long-only, and short-only legs (top/bottom 10%, no slippage).
 
-### Individual analysis plots
+### Portfolio turnover
 
-| Figure | Description |
-|--------|-------------|
-| [IC](demo/IC.png) | Monthly IC bars + cumulative IC |
-| [Rank IC](demo/RankIC.png) | Monthly Rank IC bars + cumulative Rank IC |
-| [Portfolio PnL](demo/portfolioPNL.png) | Period return, distribution, cumulative PnL |
-| [PnL decomposition](demo/PNL_decomp.png) | Long–short / long-only / short-only (no slippage) |
-| [CAPM](demo/CAPM.png) | Long–short vs SPX 5-day return scatter |
-| [Turnover](demo/Turnover.png) | Rebalance turnover with 12-period rolling mean |
+![Rebalance turnover rate](demo/Turnover.png)
 
-Regenerate all figures (including `demo/all_in_one.png`) by running `train.ipynb` with `SKIP_TRAINING = True` and saving Section **8b** output.
+One-sided turnover at each rebalance date (average of long-leg and short-leg turnover), with a 12-period rolling mean.
+
+### CAPM regression vs SPX
+
+![Long–short CAPM scatter](demo/CAPM.png)
+
+Scatter of long–short 5-day portfolio returns vs SPX 5-day returns with OLS fit (slope ≈ beta, intercept ≈ alpha per period).
 
 ---
 
@@ -159,12 +162,6 @@ Artifacts:
 - `outputs/walkforward/metrics_summary.csv`
 - `outputs/walkforward/models/us_{year}__0.pkl`
 
-To rebuild predictions from saved checkpoints without retraining:
-
-```bash
-python scripts/reconstruct_oos.py
-```
-
 ---
 
 ## Repository layout
@@ -178,10 +175,9 @@ MASTER_SPX/
 ├── scripts/
 │   ├── build_master_panel.py
 │   ├── run_walkforward.py
-│   ├── reconstruct_oos.py
 │   ├── eval_utils.py
 │   └── ...
-├── demo/                  # Exported figures (all_in_one, IC, PnL, …)
+├── demo/                  # Exported figures for README / reports
 ├── data/                  # Raw & processed data (mostly gitignored)
 └── outputs/walkforward/   # Predictions, metrics, checkpoints
 ```
