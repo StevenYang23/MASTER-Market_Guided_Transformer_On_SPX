@@ -60,7 +60,7 @@ def main():
     metrics_rows = []
 
     for year in tqdm(REFIT_YEARS, desc="Reconstructing folds"):
-        model_path = models_dir / f"us_{year}_0.pkl"
+        model_path = models_dir / f"us_{year}__{SEED}.pkl"
         if not model_path.exists():
             print(f"No checkpoint for fold {year} at {model_path}, skipping.")
             continue
