@@ -6,6 +6,10 @@ Independent reproduction of the AAAI 2024 paper [**MASTER: Market-Guided Stock T
 
 This repo is based on the authors’ public release ([Zenodo](https://doi.org/10.5281/zenodo.15480922)).
 
+![MASTER framework](demo/framework.png)
+
+Market-guided gating → feature layer → temporal attention (intra-stock) → cross-sectional attention (inter-stock) → temporal pooling → return prediction.
+
 ---
 
 ## Overview
@@ -35,12 +39,6 @@ End-to-end workflow lives in [`train.ipynb`](train.ipynb): data prep → walk-fo
 ## Key Results
 
 Statistics below are from the saved walk-forward OOS predictions (`outputs/walkforward/predictions.parquet`), evaluated in `train.ipynb` (Section 5). Portfolio metrics use **no slippage** (`SLIPPAGE = 0`); annualization uses `252 / 5 = 50.4` periods per year. All figures are exported to [`demo/`](demo/) (7 images).
-
-### Model architecture
-
-![MASTER framework](demo/framework.png)
-
-Market-guided gating → feature layer → temporal attention (intra-stock) → cross-sectional attention (inter-stock) → temporal pooling → return prediction.
 
 ### Portfolio PnL
 
